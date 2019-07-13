@@ -22,6 +22,24 @@ using System.Net;
 using System.Text;
 using EasyCaching.InMemory;
 using EasyCaching.Core;
+using Sniper.Services.Common;
+using Sniper.Web.Framework.Security.Captcha;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Sniper.Web.Framework.Themes;
+using Sniper.Data;
+using StackExchange.Profiling.Storage;
+using Sniper.Core.Domain.Stores;
+using Sniper.Services.Security;
+using WebMarkupMin.AspNetCore2;
+using Sniper.Core.Domain.Common;
+using WebMarkupMin.NUglify;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Serialization;
+using Sniper.Web.Framework.Mvc.ModelBinding;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Sniper.Web.Framework.Mvc.Routing;
 
 namespace Sniper.Web.Framework.Infrastructure.Extensions
 {
@@ -187,7 +205,165 @@ namespace Sniper.Web.Framework.Infrastructure.Extensions
         /// <param name="services"></param>
         public static void AddNopHttpClients(this IServiceCollection services)
         {
-            
+            services.AddHttpClient(NopHttpDefaults.DefaultHttpClient).WithProxy();
+
+            services.AddHttpClient<StoreHttpClient>();
+
+            services.AddHttpClient<NopHttpClient>().WithProxy();
+
+            services.AddHttpClient<CaptchaHttpClient>().WithProxy();
+        }
+
+        /// <summary>
+        /// 添加反伪造服务
+        /// </summary>
+        /// <param name="services"></param>
+        public static void AddAntiForgery(this IServiceCollection services)
+        {
+            services.AddAntiforgery(options =>
+            {
+                options.Cookie.Name = $"{NopCookieDefaults.Prefix}{NopCookieDefaults.AntiforgeryCookie}";
+
+                options.Cookie.SecurePolicy = DataSettingsManager.DatabaseIsInstalled && EngineContext.Current.Resolve<SecuritySettings>().ForceSslForAllPages ?
+                CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.None;
+            });
+
+        }
+
+        /// <summary>
+        /// 添加主题
+        /// </summary>
+        /// <param name="services"></param>
+        public static void AddThemes(this IServiceCollection services)
+        {
+            if (!DataSettingsManager.DatabaseIsInstalled)
+                return;
+
+            services.Configure<RazorViewEngineOptions>(optios =>
+            {
+                optios.ViewLocationExpanders.Add(new ThemeableViewLocationExpander());
+            });
+        }
+
+        public static void AddNopObjectContext(this IServiceCollection services)
+        {
+            services.AddDbContextPool<NopObjectContext>(opyions =>
+            {
+                opyions.UseSqlServerWithLazyLoading(services);
+            });
+        }
+
+        /// <summary>
+        /// 配置NopMini
+        /// </summary>
+        /// <param name="services"></param>
+        public static void AddNopMiniProfiler(this IServiceCollection services)
+        {
+            if (!DataSettingsManager.DatabaseIsInstalled)
+                return;
+
+            services.AddMiniProfiler(miniProfilerOptions =>
+            {
+                ((MemoryCacheStorage)miniProfilerOptions.Storage).CacheDuration = TimeSpan.FromMinutes(60);
+                miniProfilerOptions.ShouldProfile = request =>
+                  EngineContext.Current.Resolve<StoreInformationSettings>().DisplayMiniProfilerInPublicStore;
+
+                miniProfilerOptions.ResultsAuthorize = request =>
+                  !EngineContext.Current.Resolve<StoreInformationSettings>().DisplayMiniProfilerForAdminOnly ||
+                  EngineContext.Current.Resolve<IPermissionService>().Authorize(StandardPermissionProvider.AccessAdminPanel);
+            }).AddEntityFramework();
+        }
+
+        /// <summary>
+        /// 添加和配置WebMarkupMin服务
+        /// </summary>
+        /// <param name="services"></param>
+        public static void AddNopWebMarkupMin(this IServiceCollection services)
+        {
+            if (!DataSettingsManager.DatabaseIsInstalled)
+                return;
+
+            services
+                .AddWebMarkupMin(options =>
+                {
+                    options.AllowMinificationInDevelopmentEnvironment = true;
+                    options.AllowCompressionInDevelopmentEnvironment = true;
+                    options.DisableMinification = !EngineContext.Current.Resolve<CommonSettings>().EnableHtmlMinification;
+                    options.DisableCompression = true;
+                    options.DisablePoweredByHttpHeaders = true;
+                })
+                .AddHtmlMinification(options =>
+                {
+                    var settings = options.MinificationSettings;
+                    options.CssMinifierFactory = new NUglifyCssMinifierFactory();
+                    options.JsMinifierFactory = new NUglifyJsMinifierFactory();
+                })
+                .AddXmlMinification(options =>
+                {
+                    var settings = options.MinificationSettings;
+                    settings.RenderEmptyTagsWithSpace = true;
+                    settings.CollapseTagsWithoutContent = true;
+                });
+        }
+
+        /// <summary>
+        /// 为应用程序添加和配置MVC
+        /// </summary>
+        /// <param name="services"></param>
+        public static IMvcBuilder AddNopMvc(this IServiceCollection services)
+        {
+            var mvcBuilder = services.AddMvc();
+            mvcBuilder.AddMvcOptions(options => options.EnableEndpointRouting = false);
+
+            mvcBuilder.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            var nopConfig = services.BuildServiceProvider().GetRequiredService<NopConfig>();
+
+            if (nopConfig.UseSessionStateTempDataProvider)
+            {
+                mvcBuilder.AddSessionStateTempDataProvider();
+            }
+            else
+            {
+                mvcBuilder.AddCookieTempDataProvider(options =>
+                {
+                    options.Cookie.Name = $"{NopCookieDefaults.Prefix}{NopCookieDefaults.TempDataCookie}";
+
+                    //whether to allow the use of cookies from SSL protected page on the other store pages which are not
+                    options.Cookie.SecurePolicy = DataSettingsManager.DatabaseIsInstalled && EngineContext.Current.Resolve<SecuritySettings>().ForceSslForAllPages
+                        ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.None;
+                });
+            }
+
+            mvcBuilder.AddJsonOptions(options => options.SerializerSettings.ContractResolver = new DefaultContractResolver());
+
+            mvcBuilder.AddMvcOptions(options => options.ModelMetadataDetailsProviders.Add(new NopMetadataProvider()));
+
+            mvcBuilder.AddMvcOptions(options => options.ModelBinderProviders.Insert(0, new NopModelBinderProvider()));
+
+            mvcBuilder.AddFluentValidation(configuration =>
+            {
+                var assemblies = mvcBuilder.PartManager.ApplicationParts.OfType<AssemblyPart>()
+                .Where(part => part.Name.StartsWith("Nop", StringComparison.InvariantCultureIgnoreCase))
+                .Select(part => part.Assembly);
+                configuration.RegisterValidatorsFromAssemblies(assemblies);
+
+                configuration.ImplicitlyValidateChildProperties = true;
+            });
+
+            mvcBuilder.AddControllersAsServices();
+
+            return mvcBuilder;
+        }
+
+        /// <summary>
+        /// 注册自定义RedirectResultExecutor
+        /// </summary>
+        /// <param name="services"></param>
+        public static void AddNopRedirectResultExecutor(this IServiceCollection services)
+        {
+            //we use custom redirect executor as a workaround to allow using non-ASCII characters in redirect URLs
+            services.AddSingleton<IActionResultExecutor<RedirectResult>, NopRedirectResultExecutor>();
         }
     }
 }

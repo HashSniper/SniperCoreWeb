@@ -16,7 +16,22 @@ namespace Sniper.Web.Framework.Infrastructure
 
         public void Configure(IApplicationBuilder application)
         {
-            throw new NotImplementedException();
+            application.UseNopResponseCompression();
+
+            application.UseNopStaticFiles();
+
+            application.UseKeepAlive();
+
+            application.UseInstallUrl();
+
+            application.UseSession();
+
+            application.UseNopRequestLocalization();
+
+            application.UseCulture();
+
+            application.UseEasyCaching();
+
         }
 
         public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
@@ -32,6 +47,11 @@ namespace Sniper.Web.Framework.Infrastructure
             services.AddHttpSession();
 
             services.AddNopHttpClients();
+
+            services.AddAntiForgery();
+
+            services.AddLocalization();
+            services.AddThemes();
         }
     }
 }

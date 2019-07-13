@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="2.2.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.6" />
+    <PackageReference Include="MiniProfiler.EntityFrameworkCore" Version="4.0.180" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sniper.Core\Sniper.Core.csproj" />
+  </ItemGroup>
+
+</Project>

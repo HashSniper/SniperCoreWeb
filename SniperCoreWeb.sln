@@ -15,11 +15,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sniper.Core", "Libraries\Sn
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sniper.Services", "Libraries\Sniper.Services\Sniper.Services.csproj", "{1B5DE488-6D28-4D2E-90B6-B97FF60B7BCD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlyForTest", "OnlyForTest\OnlyForTest.csproj", "{8E911133-F818-464E-98DA-0BDDD6F18694}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OnlyForTest", "OnlyForTest\OnlyForTest.csproj", "{8E911133-F818-464E-98DA-0BDDD6F18694}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{D959658E-3FBF-4A31-91AD-7485848A30B6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sniper.Services.Tests", "Test\Sniper.Services.Tests\Sniper.Services.Tests.csproj", "{C3C91E96-DAC6-4B3A-A608-24C6B1AFE1BC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sniper.Services.Tests", "Test\Sniper.Services.Tests\Sniper.Services.Tests.csproj", "{C3C91E96-DAC6-4B3A-A608-24C6B1AFE1BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sniper.Data", "Libraries\Sniper.Data\Sniper.Data.csproj", "{F9E8364D-AD05-4657-98C7-73AA25AA3F74}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{C3C91E96-DAC6-4B3A-A608-24C6B1AFE1BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C3C91E96-DAC6-4B3A-A608-24C6B1AFE1BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C3C91E96-DAC6-4B3A-A608-24C6B1AFE1BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9E8364D-AD05-4657-98C7-73AA25AA3F74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9E8364D-AD05-4657-98C7-73AA25AA3F74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9E8364D-AD05-4657-98C7-73AA25AA3F74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9E8364D-AD05-4657-98C7-73AA25AA3F74}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -61,6 +67,7 @@ Global
 		{820CA5DE-0588-477D-9657-2318381A671C} = {59C8FCB7-A7F7-40AB-BA02-8FB39AA24BFC}
 		{1B5DE488-6D28-4D2E-90B6-B97FF60B7BCD} = {59C8FCB7-A7F7-40AB-BA02-8FB39AA24BFC}
 		{C3C91E96-DAC6-4B3A-A608-24C6B1AFE1BC} = {D959658E-3FBF-4A31-91AD-7485848A30B6}
+		{F9E8364D-AD05-4657-98C7-73AA25AA3F74} = {59C8FCB7-A7F7-40AB-BA02-8FB39AA24BFC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E09CDB18-9D19-42FB-87CB-3D567BE7EBC4}

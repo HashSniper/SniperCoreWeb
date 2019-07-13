@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Libraries\Sniper.Core\Sniper.Core.csproj" />
+    <ProjectReference Include="..\..\Libraries\Sniper.Data\Sniper.Data.csproj" />
     <ProjectReference Include="..\..\Libraries\Sniper.Services\Sniper.Services.csproj" />
   </ItemGroup>
 

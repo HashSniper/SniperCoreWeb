@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Sniper.Core\Sniper.Core.csproj" />
+    <ProjectReference Include="..\Sniper.Data\Sniper.Data.csproj" />
   </ItemGroup>
 
 </Project>

@@ -40,6 +40,9 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Sniper.Web.Framework.Mvc.Routing;
+using Sniper.Services.Tasks;
+using Sniper.Services.Logging;
+using Sniper.Services.Plugins;
 
 namespace Sniper.Web.Framework.Infrastructure.Extensions
 {
@@ -63,7 +66,16 @@ namespace Sniper.Web.Framework.Infrastructure.Extensions
             var engine = EngineContext.Create();
 
             var serviceProvider = engine.ConfigureServices(services, configuration, nopConfig);
-            return null;
+
+            if (!DataSettingsManager.DatabaseIsInstalled)
+                return serviceProvider;
+            TaskManager.Instance.Initialize();
+            TaskManager.Instance.Start();
+
+            engine.Resolve<ILogger>().Information("Application started");
+            engine.Resolve<IPluginService>().InstallPlugins();
+
+            return serviceProvider;
         }
 
         public static TConfig ConfigureStartupConfig<TConfig>(this IServiceCollection services, IConfiguration configuration) where TConfig : class, new()

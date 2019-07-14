@@ -1,8 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Sniper.Core;
+using Sniper.Data.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace Sniper.Data
@@ -47,6 +49,29 @@ namespace Sniper.Data
             throw new NotImplementedException();
         }
         #endregion
+
+        #region Utilties
+
+        /// <summary>
+        /// 配置模型
+        /// </summary>
+        /// <param name="modelBuilder"></param>
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            var typeConfigurations = Assembly.GetExecutingAssembly().GetTypes().Where(type =>
+               (type.BaseType?.IsGenericType ?? false)
+                   && (type.BaseType.GetGenericTypeDefinition() == typeof(NopEntityTypeConfiguration<>)
+                       || type.BaseType.GetGenericTypeDefinition() == typeof(NopQueryTypeConfiguration<>)));          
+
+            foreach (var typeConfiguration in typeConfigurations)
+            {
+                var configuration = (IMappingConfiguration)Activator.CreateInstance(typeConfiguration);
+                configuration.ApplyConfiguration(modelBuilder);
+            }
+            base.OnModelCreating(modelBuilder);
+        }
+        #endregion
+
 
     }
 }

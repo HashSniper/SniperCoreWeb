@@ -7,7 +7,7 @@ namespace Sniper.Core
 {
     public interface IStoreContext
     {
-        Store CurrentStore { get; set; }
+        Store CurrentStore { get; }
 
         int ActiveStoreScopeConfiguration { get; }
     }

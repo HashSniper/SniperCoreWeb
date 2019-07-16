@@ -15,7 +15,7 @@ namespace Sniper.Core.Infrastructure
         [MethodImpl(MethodImplOptions.Synchronized)]
         public static IEngine Create()
         {
-            return Singleton<IEngine>.Instace ?? (Singleton<IEngine>.Instace = new NopEngine());
+            return Singleton<IEngine>.Instance ?? (Singleton<IEngine>.Instance = new NopEngine());
 
         }
         #endregion
@@ -25,12 +25,12 @@ namespace Sniper.Core.Infrastructure
         public static IEngine Current
         {
             get {
-                if (Singleton<IEngine>.Instace == null)
+                if (Singleton<IEngine>.Instance == null)
                 {
                     Create();
                 }
 
-                return Singleton<IEngine>.Instace;
+                return Singleton<IEngine>.Instance;
             }
         }
         #endregion

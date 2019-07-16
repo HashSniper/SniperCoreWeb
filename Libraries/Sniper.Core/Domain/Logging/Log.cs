@@ -13,6 +13,11 @@ namespace Sniper.Core.Domain.Logging
         public int LogLevelId { get; set; }
 
         /// <summary>
+        /// 短信息
+        /// </summary>
+        public string ShortMessage { get; set; }
+
+        /// <summary>
         /// 异常详细信息
         /// </summary>
         public string FullMessage { get; set; }

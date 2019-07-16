@@ -11,4 +11,9 @@
     <ProjectReference Include="..\Sniper.Web.Framework\Sniper.Web.Framework.csproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <Folder Include="Themes\" />
+  </ItemGroup>
+
 </Project>

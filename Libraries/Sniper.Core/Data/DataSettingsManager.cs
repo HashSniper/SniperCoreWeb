@@ -21,8 +21,8 @@ namespace Sniper.Core.Data
         /// <returns></returns>
         public static DataSettings LoadSettings(string filePath = null, bool reloadSettings = false, INopFileProvider fileProvider = null)
         {
-            if (!reloadSettings && Singleton<DataSettings>.Instace != null)
-                return Singleton<DataSettings>.Instace;
+            if (!reloadSettings && Singleton<DataSettings>.Instance != null)
+                return Singleton<DataSettings>.Instance;
 
             fileProvider = fileProvider ?? CommonHelper.DefaultFileProvider;
             filePath = filePath ?? fileProvider.MapPath(NopDataSettingsDefaults.FilePath);
@@ -65,8 +65,8 @@ namespace Sniper.Core.Data
 
                 SaveSettings(dataSettings, fileProvider);
                 fileProvider.DeleteFile(filePath);
-                Singleton<DataSettings>.Instace = dataSettings;
-                return Singleton<DataSettings>.Instace;
+                Singleton<DataSettings>.Instance = dataSettings;
+                return Singleton<DataSettings>.Instance;
             }
 
             var text = fileProvider.ReadAllText(filePath, Encoding.UTF8);
@@ -75,9 +75,9 @@ namespace Sniper.Core.Data
                 return new DataSettings();
             }
 
-            Singleton<DataSettings>.Instace = JsonConvert.DeserializeObject<DataSettings>(text);
+            Singleton<DataSettings>.Instance = JsonConvert.DeserializeObject<DataSettings>(text);
 
-            return Singleton<DataSettings>.Instace;
+            return Singleton<DataSettings>.Instance;
         }
 
         /// <summary>
@@ -87,14 +87,14 @@ namespace Sniper.Core.Data
         /// <param name="fileProvider"></param>
         public static void SaveSettings(DataSettings settings, INopFileProvider fileProvider = null)
         {
-            Singleton<DataSettings>.Instace=settings?? throw new ArgumentNullException(nameof(settings));
+            Singleton<DataSettings>.Instance = settings?? throw new ArgumentNullException(nameof(settings));
 
             fileProvider = fileProvider ?? CommonHelper.DefaultFileProvider;
             var filePath = fileProvider.MapPath(NopDataSettingsDefaults.FilePath);
 
             fileProvider.CreateFile(filePath);
 
-            var text = JsonConvert.SerializeObject(Singleton<DataSettings>.Instace, Formatting.Indented);
+            var text = JsonConvert.SerializeObject(Singleton<DataSettings>.Instance, Formatting.Indented);
 
             fileProvider.WriteAllText(filePath, text, Encoding.UTF8);
         }

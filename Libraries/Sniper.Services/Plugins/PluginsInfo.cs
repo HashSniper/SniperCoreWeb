@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Sniper.Services.Plugins
 {
-    public partial class PluginsInfo:IPluginsInfo
+    public partial class PluginsInfo : IPluginsInfo
     {
         protected readonly INopFileProvider _fileProvider;
 

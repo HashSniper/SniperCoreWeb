@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Sniper.Core;
 using Sniper.Core.Data;
@@ -77,20 +78,68 @@ namespace Sniper.Services.Logging
                 InsertLog(LogLevel.Information, message, exception?.ToString() ?? string.Empty, customer);
         }
 
-        public Log InsertLog(LogLevel logLevel, string shortMessage, string fullMessage = "", Customer customer = null)
+        public virtual Log InsertLog(LogLevel logLevel, string shortMessage, string fullMessage = "", Customer customer = null)
         {
-            throw new NotImplementedException();
-        }
+            if (IgnoreLog(shortMessage) || IgnoreLog(fullMessage))
+                return null;
 
+            var log = new Log
+            {
+                LogLevel = logLevel,
+                ShortMessage = shortMessage,
+                FullMessage = fullMessage,
+                IpAddress = _webHelper.GetCurrentIpAddress(),
+                Customer = customer,
+                PageUrl = _webHelper.GetThisPageUrl(true),
+                ReferrerUrl=_webHelper.GetUrlReferrer(),
+                CreatedOnUtc=DateTime.UtcNow
+            };
+
+            _logRepository.Insert(log);
+            return log;
+        }
+        /// <summary>
+        /// 确定是否启用了日志级别
+        /// </summary>
+        /// <param name="level"></param>
+        /// <returns></returns>
         public bool IsEnabled(LogLevel level)
         {
-            throw new NotImplementedException();
+            switch (level)
+            {
+                case LogLevel.Debug:
+                    return false;
+                default:
+                    return true;
+            }
         }
 
         public void Warning(string message, Exception exception = null, Customer customer = null)
         {
             throw new NotImplementedException();
         }
+        #endregion
+
+        #region Utilities
+
+        /// <summary>
+        /// 判断是否需要记录
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        protected virtual bool IgnoreLog(string message)
+        {
+            if (!_commonSettings.IgnoreLogWordlist.Any())
+            {
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(message))
+                return false;
+
+            return _commonSettings.IgnoreLogWordlist.Any(s => message.IndexOf(s, StringComparison.InvariantCultureIgnoreCase) >= 0);
+        }
+
         #endregion
     }
 }

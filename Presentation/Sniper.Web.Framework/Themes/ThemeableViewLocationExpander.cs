@@ -1,20 +1,38 @@
 ﻿using Microsoft.AspNetCore.Mvc.Razor;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Sniper.Web.Framework.Themes
 {
     public class ThemeableViewLocationExpander : IViewLocationExpander
     {
+        private const string THEME_KEY = "nop.themename";
+
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
-            throw new NotImplementedException();
+            if (context.Values.TryGetValue(THEME_KEY, out string theme))
+            {
+                viewLocations = new[] {
+                        $"/Themes/{theme}/Views/{{1}}/{{0}}.cshtml",
+                        $"/Themes/{theme}/Views/Shared/{{0}}.cshtml",
+                    }
+                    .Concat(viewLocations);
+            }
+
+
+            return viewLocations;
         }
 
         public void PopulateValues(ViewLocationExpanderContext context)
         {
-            throw new NotImplementedException();
+            //no need to add the themeable view locations at all as the administration should not be themeable anyway
+            if (context.AreaName?.Equals(AreaNames.Admin) ?? false)
+                return;
+
+            var themeContext = (IThemeContext)context.ActionContext.HttpContext.RequestServices.GetService(typeof(IThemeContext));
+            context.Values[THEME_KEY] = themeContext.WorkingThemeName;
         }
     }
 }

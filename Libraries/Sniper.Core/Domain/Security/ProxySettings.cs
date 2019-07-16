@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Sniper.Core.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Sniper.Core.Domain.Security
 {
-    public class ProxySettings
+    public partial class ProxySettings : ISettings
     {
         /// <summary>
         /// 是否使用代理连接

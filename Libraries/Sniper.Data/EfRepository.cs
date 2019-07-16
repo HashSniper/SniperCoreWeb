@@ -61,9 +61,24 @@ namespace Sniper.Data
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 插入
+        /// </summary>
+        /// <param name="entity"></param>
         public void Insert(TEntity entity)
         {
-            throw new NotImplementedException();
+            if(entity==null)
+                throw new ArgumentNullException(nameof(entity));
+
+            try
+            {
+                Entities.Add(entity);
+                _context.SaveChanges();
+            }
+            catch(DbUpdateException exception)
+            {
+                throw new Exception(GetFullErrorTextAndRollbackEntityChanges(exception), exception);
+            }
         }
 
         public void Insert(IEnumerable<TEntity> entities)
@@ -80,6 +95,47 @@ namespace Sniper.Data
         {
             throw new NotImplementedException();
         }
+        #endregion
+
+        #region Utilities
+
+        /// <summary>
+        /// 回滚实体更改并返回完整的错误消息
+        /// </summary>
+        /// <param name="exception"></param>
+        /// <returns></returns>
+        protected string GetFullErrorTextAndRollbackEntityChanges(DbUpdateException exception)
+        {
+            if (_context is DbContext dbContext)
+            {
+                var entries = dbContext.ChangeTracker.Entries()
+                    .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified).ToList();
+
+                entries.ForEach(entry =>
+                {
+                    try
+                    {
+                        entry.State = EntityState.Unchanged;
+                    }
+                    catch
+                    {
+
+                    }
+                });
+               
+            }
+            try
+            {
+                _context.SaveChanges();
+                return exception.ToString();
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+
+        }
+
         #endregion
     }
 }

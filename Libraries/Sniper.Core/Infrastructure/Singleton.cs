@@ -9,7 +9,7 @@ namespace Sniper.Core.Infrastructure
         private static T instance;
 
 
-        public static T Instace
+        public static T Instance
         {
             get => instance;
             set

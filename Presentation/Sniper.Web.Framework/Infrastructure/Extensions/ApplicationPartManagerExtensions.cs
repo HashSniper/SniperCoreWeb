@@ -54,8 +54,8 @@ namespace Sniper.Web.Framework.Infrastructure.Extensions
         #endregion
 
         private static IPluginsInfo PluginsInfo {
-            get => Singleton<IPluginsInfo>.Instace;
-            set => Singleton<IPluginsInfo>.Instace = value;
+            get => Singleton<IPluginsInfo>.Instance;
+            set => Singleton<IPluginsInfo>.Instance = value;
         }
 
         /// <summary>

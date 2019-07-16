@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Sniper.Core.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -143,6 +144,23 @@ namespace Sniper.Services.Plugins
             return descriptor;
         }
 
+        /// <summary>
+        /// instance of the plugin
+        /// </summary>
+        /// <typeparam name="TPlugin"></typeparam>
+        /// <returns></returns>
+        public virtual TPlugin Instance<TPlugin>() where TPlugin : class, IPlugin
+        {
+            var instance = EngineContext.Current.ResolveUnregistered(PluginType);
+
+            var typedInstance = instance as TPlugin;
+            if (typedInstance != null)
+            {
+                typedInstance.PluginDescriptor = this;
+            }
+
+            return typedInstance;
+        }
         #endregion
     }
 }

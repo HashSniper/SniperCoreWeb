@@ -27,10 +27,10 @@ namespace Sniper.Web
         private IHostingEnvironment HostingEnvironment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public IServiceProvider ConfigureServices(IServiceCollection services)
         {
 
-            services.ConfigureApplicationServices(Configuration, HostingEnvironment);
+           return services.ConfigureApplicationServices(Configuration, HostingEnvironment);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Autofac.Builder;
 using Autofac.Core;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Sniper.Core;
 using Sniper.Core.Caching;
@@ -12,6 +13,7 @@ using Sniper.Core.Redis;
 using Sniper.Data;
 using Sniper.Services.Common;
 using Sniper.Services.Configuration;
+using Sniper.Services.Customers;
 using Sniper.Services.Events;
 using Sniper.Services.Localization;
 using Sniper.Services.Logging;
@@ -19,6 +21,8 @@ using Sniper.Services.Plugins;
 using Sniper.Services.Security;
 using Sniper.Services.Stores;
 using Sniper.Services.Tasks;
+using Sniper.Services.Themes;
+using Sniper.Web.Framework.Themes;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -73,6 +77,13 @@ namespace Sniper.Web.Framework.Infrastructure
 
             builder.RegisterType<SettingService>().As<ISettingService>().InstancePerLifetimeScope();
             builder.RegisterType<DefaultLogger>().As<ILogger>().InstancePerLifetimeScope();
+
+            builder.RegisterType<ActionContextAccessor>().As<IActionContextAccessor>().InstancePerLifetimeScope();
+            builder.RegisterType<CustomerService>().As<ICustomerService>().InstancePerLifetimeScope();
+            builder.RegisterType<ThemeContext>().As<IThemeContext>().InstancePerLifetimeScope();
+            builder.RegisterType<ThemeProvider>().As<IThemeProvider>().InstancePerLifetimeScope();
+
+
 
             if (config.RedisEnabled && config.UseRedisForCaching)
             {

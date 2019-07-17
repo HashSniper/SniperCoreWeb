@@ -21,17 +21,22 @@ using System.Linq;
 using Sniper.Services.Media.RoxyFileman;
 using Sniper.Services.Common;
 using Sniper.Services.Installation;
-using Sniper.Services.ILanguageService;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Sniper.Web.Framework.Globalization;
 using WebMarkupMin.AspNetCore2;
 using Sniper.Web.Framework.Mvc.Routing;
+using Sniper.Services.Localization;
 
 namespace Sniper.Web.Framework.Infrastructure.Extensions
 {
     public static class ApplicationBuilderExtensions
     {
+        public static void ConfigureRequestPipeline(this IApplicationBuilder application)
+        {
+            EngineContext.Current.ConfigureRequestPipeline(application);
+        }
+
         public static void UseNopAuthentication(this IApplicationBuilder application)
         {
             //check whether database is installed

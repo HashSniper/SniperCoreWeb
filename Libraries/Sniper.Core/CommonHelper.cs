@@ -71,5 +71,13 @@ namespace Sniper.Core
 
             return value;
         }
+
+
+        public static void SetTelerikCulture()
+        {
+            var culture = new CultureInfo("en-US");
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+        }
     }
 }

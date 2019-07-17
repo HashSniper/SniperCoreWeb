@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sniper.Services.ILanguageService
+namespace Sniper.Services.Localization
 {
     public partial interface ILanguageService
     {
@@ -47,6 +47,6 @@ namespace Sniper.Services.ILanguageService
         /// </summary>
         /// <param name="language"></param>
         /// <returns></returns>
-        string GetTwoLetterIsoLanguageName(Language language); 
+        string GetTwoLetterIsoLanguageName(Language language);
     }
 }

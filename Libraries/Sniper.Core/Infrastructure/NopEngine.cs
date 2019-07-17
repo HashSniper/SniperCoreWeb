@@ -132,9 +132,23 @@ namespace Sniper.Core.Infrastructure
         #endregion
 
         #region Methods
+        /// <summary>
+        /// 配置HTTP请求管道
+        /// </summary>
+        /// <param name="application"></param>
         public void ConfigureRequestPipeline(IApplicationBuilder application)
         {
-            throw new NotImplementedException();
+            var typeFinder = Resolve<ITypeFinder>();
+
+            var startupConfigurations = typeFinder.FindClassesOfType<INopStartup>();
+
+            var instances = startupConfigurations.Select(startup => (INopStartup)Activator.CreateInstance(startup))
+                .OrderBy(startup => startup.Order);
+
+            foreach (var instance in instances)
+            {
+                instance.Configure(application);
+            }
         }
 
         public IServiceProvider ConfigureServices(IServiceCollection services, IConfiguration configuration, NopConfig nopConfig)

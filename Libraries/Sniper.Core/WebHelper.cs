@@ -6,6 +6,7 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
@@ -226,9 +227,18 @@ namespace Sniper.Core
             throw new NotImplementedException();
         }
 
-        public bool IsStaticResource()
+        public virtual bool IsStaticResource()
         {
-            throw new NotImplementedException();
+            if (!IsRequestAvailable())
+                return false;
+
+            string path = _httpContextAccessor.HttpContext.Request.Path;
+
+            //a little workaround. FileExtensionContentTypeProvider contains most of static file extensions. So we can use it
+            //source: https://github.com/aspnet/StaticFiles/blob/dev/src/Microsoft.AspNetCore.StaticFiles/FileExtensionContentTypeProvider.cs
+            //if it can return content type, then it's a static file
+            var contentTypeProvider = new FileExtensionContentTypeProvider();
+            return contentTypeProvider.TryGetContentType(path, out var _);
         }
 
         public string ModifyQueryString(string url, string key, params string[] values)

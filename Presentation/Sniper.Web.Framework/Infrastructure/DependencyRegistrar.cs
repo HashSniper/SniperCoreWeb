@@ -22,6 +22,7 @@ using Sniper.Services.Security;
 using Sniper.Services.Stores;
 using Sniper.Services.Tasks;
 using Sniper.Services.Themes;
+using Sniper.Web.Framework.Mvc.Routing;
 using Sniper.Web.Framework.Themes;
 using System;
 using System.Collections.Generic;
@@ -82,6 +83,9 @@ namespace Sniper.Web.Framework.Infrastructure
             builder.RegisterType<CustomerService>().As<ICustomerService>().InstancePerLifetimeScope();
             builder.RegisterType<ThemeContext>().As<IThemeContext>().InstancePerLifetimeScope();
             builder.RegisterType<ThemeProvider>().As<IThemeProvider>().InstancePerLifetimeScope();
+            builder.RegisterType<LanguageService>().As<ILanguageService>().InstancePerLifetimeScope();
+            builder.RegisterType<StoreMappingService>().As<IStoreMappingService>().InstancePerLifetimeScope();
+            builder.RegisterType<RoutePublisher>().As<IRoutePublisher>().SingleInstance();
 
 
 

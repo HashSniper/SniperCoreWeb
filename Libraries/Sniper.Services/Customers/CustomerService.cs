@@ -6,11 +6,70 @@ using Sniper.Core.Domain.Common;
 using Sniper.Core.Domain.Customers;
 using Sniper.Core.Domain.Orders;
 using Sniper.Core.Domain.Tax;
+using System.Linq;
+using Sniper.Core.Caching;
+using Sniper.Core.Data;
+using Sniper.Data;
+using Sniper.Services.Events;
+using Sniper.Services.Common;
 
 namespace Sniper.Services.Customers
 {
     public partial class CustomerService : ICustomerService
     {
+        #region Fields
+        private readonly CustomerSettings _customerSettings;
+        private readonly ICacheManager _cacheManager;
+        private readonly IDataProvider _dataProvider;
+        private readonly IDbContext _dbContext;
+        private readonly IEventPublisher _eventPublisher;
+        private readonly IGenericAttributeService _genericAttributeService;
+        private readonly IRepository<Customer> _customerRepository;
+        private readonly IRepository<CustomerCustomerRoleMapping> _customerCustomerRoleMappingRepository;
+        private readonly IRepository<CustomerPassword> _customerPasswordRepository;
+        private readonly IRepository<CustomerRole> _customerRoleRepository;
+        private readonly IRepository<GenericAttribute> _gaRepository;
+        private readonly IRepository<ShoppingCartItem> _shoppingCartRepository;
+        private readonly IStaticCacheManager _staticCacheManager;
+        private readonly ShoppingCartSettings _shoppingCartSettings;
+        #endregion
+
+        #region Ctor
+
+        public CustomerService(CustomerSettings customerSettings,
+            ICacheManager cacheManager,
+            IDataProvider dataProvider,
+            IDbContext dbContext,
+            IEventPublisher eventPublisher,
+            IGenericAttributeService genericAttributeService,
+            IRepository<Customer> customerRepository,
+            IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMappingRepository,
+            IRepository<CustomerPassword> customerPasswordRepository,
+            IRepository<CustomerRole> customerRoleRepository,
+            IRepository<GenericAttribute> gaRepository,
+            IRepository<ShoppingCartItem> shoppingCartRepository,
+            IStaticCacheManager staticCacheManager,
+            ShoppingCartSettings shoppingCartSettings)
+        {
+            _customerSettings = customerSettings;
+            _cacheManager = cacheManager;
+            _dataProvider = dataProvider;
+            _dbContext = dbContext;
+            _eventPublisher = eventPublisher;
+            _genericAttributeService = genericAttributeService;
+            _customerRepository = customerRepository;
+            _customerCustomerRoleMappingRepository = customerCustomerRoleMappingRepository;
+            _customerPasswordRepository = customerPasswordRepository;
+            _customerRoleRepository = customerRoleRepository;
+            _gaRepository = gaRepository;
+            _shoppingCartRepository = shoppingCartRepository;
+            _staticCacheManager = staticCacheManager;
+            _shoppingCartSettings = shoppingCartSettings;
+        }
+
+        #endregion
+
+        #region Methods
         public void ApplyDiscountCouponCode(Customer customer, string couponCode)
         {
             throw new NotImplementedException();
@@ -63,7 +122,16 @@ namespace Sniper.Services.Customers
 
         public Customer GetCustomerByGuid(Guid customerGuid)
         {
-            throw new NotImplementedException();
+            if (customerGuid == Guid.Empty)
+                return null;
+
+            var query = from c in _customerRepository.Table
+                        where c.CustomerGuid == customerGuid
+                        orderby c.Id
+                        select c;
+
+            var customer = query.FirstOrDefault();
+            return customer;
         }
 
         public Customer GetCustomerById(int customerId)
@@ -101,9 +169,23 @@ namespace Sniper.Services.Customers
             throw new NotImplementedException();
         }
 
-        public CustomerRole GetCustomerRoleBySystemName(string systemName)
+        public virtual CustomerRole GetCustomerRoleBySystemName(string systemName)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(systemName))
+                return null;
+
+            var key = string.Format(NopCustomerServiceDefaults.CustomerRolesBySystemNameCacheKey, systemName);
+
+            return _cacheManager.Get(key, () =>
+            {
+                var query = from cr in _customerRoleRepository.Table
+                            orderby cr.Id
+                            where cr.SystemName == systemName
+                            select cr;
+                var customerRole = query.FirstOrDefault();
+
+                return customerRole;
+            });
         }
 
         public IList<Customer> GetCustomersByIds(int[] customerIds)
@@ -138,7 +220,23 @@ namespace Sniper.Services.Customers
 
         public Customer InsertGuestCustomer()
         {
-            throw new NotImplementedException();
+            Customer customer = new Customer
+            {
+                CustomerGuid = Guid.NewGuid(),
+                Active = true,
+                CreatedOnUtc = DateTime.UtcNow,
+                LastActivityDateUtc = DateTime.UtcNow
+            };
+
+            var guestRole = GetCustomerRoleBySystemName(NopCustomerDefaults.GuestsRoleName);
+
+            if(guestRole==null)
+                throw new NopException("'Guests' role could not be loaded");
+            customer.AddCustomerRoleMapping(new CustomerCustomerRoleMapping { CustomerRole = guestRole });
+
+            _customerRepository.Insert(customer);
+
+            return customer;
         }
 
         public bool IsPasswordRecoveryLinkExpired(Customer customer)
@@ -200,5 +298,6 @@ namespace Sniper.Services.Customers
         {
             throw new NotImplementedException();
         }
+        #endregion
     }
 }

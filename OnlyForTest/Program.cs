@@ -20,5 +20,10 @@ namespace OnlyForTest
 
 
         }
+
+        public (List<string>, List<string>) GetData()
+        {
+            return (new List<string>(), new List<string>());
+        }
     }
 }

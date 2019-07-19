@@ -39,12 +39,38 @@ namespace Sniper.Services.Stores
         #region Methods
         public bool Authorize<T>(T entity) where T : BaseEntity, IStoreMappingSupported
         {
-            throw new NotImplementedException();
+            return Authorize(entity, _storeContext.CurrentStore.Id);
         }
 
+        /// <summary>
+        /// 授权是否可以在当前商店中访问实体（映射到此商店）
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="entity"></param>
+        /// <param name="storeId"></param>
+        /// <returns></returns>
         public bool Authorize<T>(T entity, int storeId) where T : BaseEntity, IStoreMappingSupported
         {
-            throw new NotImplementedException();
+            if (entity == null)
+                return false;
+
+            if (storeId == 0)
+                //return true if no store specified/found
+                return true;
+
+            if (_catalogSettings.IgnoreStoreLimitations)
+                return true;
+
+            if (!entity.LimitedToStores)
+                return true;
+
+            foreach (var storeIdWithAccess in GetStoresIdsWithAccess(entity))
+                if (storeId == storeIdWithAccess)
+                    //yes, we have such permission
+                    return true;
+
+            //no permission found
+            return false;
         }
 
         public void DeleteStoreMapping(StoreMapping storeMapping)

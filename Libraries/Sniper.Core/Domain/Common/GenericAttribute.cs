@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Sniper.Core.Domain.Common
 {
-    public class GenericAttribute
+    public class GenericAttribute: BaseEntity
     {
         /// <summary>
         /// 实体id

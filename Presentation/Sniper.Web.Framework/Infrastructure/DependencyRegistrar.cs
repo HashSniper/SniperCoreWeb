@@ -11,10 +11,13 @@ using Sniper.Core.Infrastructure;
 using Sniper.Core.Infrastructure.DependencyManagement;
 using Sniper.Core.Redis;
 using Sniper.Data;
+using Sniper.Services.Authentication;
 using Sniper.Services.Common;
 using Sniper.Services.Configuration;
 using Sniper.Services.Customers;
+using Sniper.Services.Directory;
 using Sniper.Services.Events;
+using Sniper.Services.Helpers;
 using Sniper.Services.Localization;
 using Sniper.Services.Logging;
 using Sniper.Services.Plugins;
@@ -22,6 +25,7 @@ using Sniper.Services.Security;
 using Sniper.Services.Stores;
 using Sniper.Services.Tasks;
 using Sniper.Services.Themes;
+using Sniper.Services.Vendors;
 using Sniper.Web.Framework.Mvc.Routing;
 using Sniper.Web.Framework.Themes;
 using System;
@@ -86,7 +90,14 @@ namespace Sniper.Web.Framework.Infrastructure
             builder.RegisterType<LanguageService>().As<ILanguageService>().InstancePerLifetimeScope();
             builder.RegisterType<StoreMappingService>().As<IStoreMappingService>().InstancePerLifetimeScope();
             builder.RegisterType<RoutePublisher>().As<IRoutePublisher>().SingleInstance();
-
+            builder.RegisterType<CookieAuthenticationService>().As<IAuthenticationService>().InstancePerLifetimeScope();
+            builder.RegisterType<CurrencyService>().As<ICurrencyService>().InstancePerLifetimeScope();
+            builder.RegisterType<UserAgentHelper>().As<IUserAgentHelper>().InstancePerLifetimeScope();
+            builder.RegisterType<VendorService>().As<IVendorService>().InstancePerLifetimeScope();
+            builder.RegisterType<ExchangeRatePluginManager>().As<IExchangeRatePluginManager>().InstancePerLifetimeScope();
+            builder.RegisterType<PerRequestCacheManager>().As<ICacheManager>().InstancePerLifetimeScope();
+            builder.Register(context => context.Resolve<IDataProviderManager>().DataProvider).As<IDataProvider>().InstancePerDependency();
+            builder.RegisterType<EfDataProviderManager>().As<IDataProviderManager>().InstancePerDependency();
 
 
             if (config.RedisEnabled && config.UseRedisForCaching)

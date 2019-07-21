@@ -36,5 +36,24 @@ namespace Sniper.Core.Domain.Customers
             var result = customer.CustomerRoles.FirstOrDefault(p => (!onlyActiveCustomerRoles || p.Active) && p.SystemName == customerRoleSystemName) != null;
             return result;
         }
+
+        /// <summary>
+        /// 获取客户角色标识符
+        /// </summary>
+        /// <param name="customer"></param>
+        /// <param name="showHidden"></param>
+        /// <returns></returns>
+        public static int[] GetCustomerRoleIds(this Customer customer, bool showHidden = false)
+        {
+            if(customer==null)
+                throw new ArgumentNullException(nameof(customer));
+
+            var customerRolesIds = customer.CustomerRoles
+                .Where(cr => showHidden || cr.Active)
+                .Select(cr => cr.Id)
+                .ToArray();
+
+            return customerRolesIds;
+        }
     }
 }

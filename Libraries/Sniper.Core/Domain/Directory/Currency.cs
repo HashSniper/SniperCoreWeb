@@ -6,6 +6,9 @@ using System.Text;
 
 namespace Sniper.Core.Domain.Directory
 {
+    /// <summary>
+    /// 货币
+    /// </summary>
     public partial class Currency : BaseEntity, ILocalizedEntity, IStoreMappingSupported
     {
         /// <summary>

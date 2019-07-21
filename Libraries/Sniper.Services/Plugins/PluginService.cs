@@ -36,7 +36,7 @@ namespace Sniper.Services.Plugins
         }
         #endregion
 
-
+        #region Methods
         public void ClearInstalledPluginsList()
         {
             throw new NotImplementedException();
@@ -147,14 +147,142 @@ namespace Sniper.Services.Plugins
             throw new NotImplementedException();
         }
 
-        IEnumerable<PluginDescriptor> IPluginService.GetPluginDescriptors<TPlugin>(LoadPluginsMode loadMode, Customer customer, int storeId, string group, string dependsOnSystemName)
+        public virtual IEnumerable<PluginDescriptor> GetPluginDescriptors<TPlugin>(LoadPluginsMode loadMode = LoadPluginsMode.InstalledOnly,
+            Customer customer = null, int storeId = 0, string group = null, string dependsOnSystemName = "") where TPlugin : class, IPlugin
         {
-            throw new NotImplementedException();
+            var pluginDescriptors = _pluginsInfo.PluginDescriptors;
+
+            pluginDescriptors = pluginDescriptors.Where(descriptor =>
+               FilterByLoadMode(descriptor, loadMode) &&
+               FilterByCustomer(descriptor, customer) &&
+               FilterByStore(descriptor, storeId) &&
+               FilterByPluginGroup(descriptor, group) &&
+               FilterByDependsOn(descriptor, dependsOnSystemName));
+
+            //filter by the passed type
+            if (typeof(TPlugin) != typeof(IPlugin))
+                pluginDescriptors = pluginDescriptors.Where(descriptor => typeof(TPlugin).IsAssignableFrom(descriptor.PluginType));
+
+            //order by group name
+            pluginDescriptors = pluginDescriptors.OrderBy(descriptor => descriptor.Group)
+                .ThenBy(descriptor => descriptor.DisplayOrder).ToList();
+
+            return pluginDescriptors;
         }
 
-        IEnumerable<TPlugin> IPluginService.GetPlugins<TPlugin>(LoadPluginsMode loadMode, Customer customer, int storeId, string group)
+        public virtual IEnumerable<TPlugin> GetPlugins<TPlugin>(LoadPluginsMode loadMode = LoadPluginsMode.InstalledOnly,
+            Customer customer = null, int storeId = 0, string group = null) where TPlugin : class, IPlugin
         {
-            throw new NotImplementedException();
+            return GetPluginDescriptors<TPlugin>(loadMode, customer, storeId, group)
+                .Select(descriptor => descriptor.Instance<TPlugin>());
         }
+
+
+
+        #endregion
+
+        #region Utilities
+        /// <summary>
+        /// 是否根据传递的加载模式加载插件
+        /// </summary>
+        /// <param name="pluginDescriptor"></param>
+        /// <param name="loadMode"></param>
+        /// <returns></returns>
+        protected virtual bool FilterByLoadMode(PluginDescriptor pluginDescriptor, LoadPluginsMode loadMode)
+        {
+            if(pluginDescriptor==null)
+                throw new ArgumentNullException(nameof(pluginDescriptor));
+
+            switch (loadMode)
+            {
+                case LoadPluginsMode.All:
+                    return true;
+
+                case LoadPluginsMode.InstalledOnly:
+                    return pluginDescriptor.Installed;
+
+                case LoadPluginsMode.NotInstalledOnly:
+                    return !pluginDescriptor.Installed;
+                default:
+                    throw new NotSupportedException(nameof(loadMode));
+            }
+        }
+
+        /// <summary>
+        /// 检查是否根据传递的客户加载插件
+        /// </summary>
+        /// <param name="pluginDescriptor"></param>
+        /// <param name="customer"></param>
+        /// <returns></returns>
+        protected virtual bool FilterByCustomer(PluginDescriptor pluginDescriptor, Customer customer)
+        {
+            if (pluginDescriptor == null)
+                throw new ArgumentNullException(nameof(pluginDescriptor));
+
+            if (customer == null || !pluginDescriptor.LimitedToCustomerRoles.Any())
+                return true;
+
+            if (_catalogSettings.IgnoreAcl)
+                return true;
+
+            return pluginDescriptor.LimitedToCustomerRoles.Intersect(customer.GetCustomerRoleIds()).Any();
+        }
+
+        /// <summary>
+        /// 检查是否根据传递的商店标识加载插件
+        /// </summary>
+        /// <param name="pluginDescriptor"></param>
+        /// <param name="storeId"></param>
+        /// <returns></returns>
+        protected virtual bool FilterByStore(PluginDescriptor pluginDescriptor, int storeId)
+        {
+            if (pluginDescriptor == null)
+                throw new ArgumentNullException(nameof(pluginDescriptor));
+
+            if (storeId == 0)
+                return true;
+
+            if (!pluginDescriptor.LimitedToStores.Any())
+            {
+                return true;
+            }
+
+            return pluginDescriptor.LimitedToStores.Contains(storeId);
+        }
+
+        /// <summary>
+        /// 检查是否根据其他插件的依赖性加载插件
+        /// </summary>
+        /// <param name="pluginDescriptor"></param>
+        /// <param name="dependsOnSystemName"></param>
+        /// <returns></returns>
+        protected virtual bool FilterByDependsOn(PluginDescriptor pluginDescriptor, string dependsOnSystemName)
+        {
+            if (pluginDescriptor == null)
+                throw new ArgumentNullException(nameof(pluginDescriptor));
+
+            if (string.IsNullOrEmpty(dependsOnSystemName))
+                return true;
+
+            return pluginDescriptor.DependsOn?.Contains(dependsOnSystemName) ?? true;
+        }
+
+        /// <summary>
+        /// 检查是否根据传递的插件组加载插件
+        /// </summary>
+        /// <param name="pluginDescriptor"></param>
+        /// <param name="group"></param>
+        /// <returns></returns>
+        protected virtual bool FilterByPluginGroup(PluginDescriptor pluginDescriptor, string group)
+        {
+            if (pluginDescriptor == null)
+                throw new ArgumentNullException(nameof(pluginDescriptor));
+
+            if (string.IsNullOrEmpty(group))
+                return true;
+
+            return group.Equals(pluginDescriptor.Group, StringComparison.InvariantCultureIgnoreCase);
+        }
+        #endregion
     }
 }

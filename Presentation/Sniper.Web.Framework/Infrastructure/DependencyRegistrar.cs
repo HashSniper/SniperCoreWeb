@@ -22,12 +22,15 @@ using Sniper.Services.Localization;
 using Sniper.Services.Logging;
 using Sniper.Services.Plugins;
 using Sniper.Services.Security;
+using Sniper.Services.Seo;
 using Sniper.Services.Stores;
 using Sniper.Services.Tasks;
 using Sniper.Services.Themes;
+using Sniper.Services.Topics;
 using Sniper.Services.Vendors;
 using Sniper.Web.Framework.Mvc.Routing;
 using Sniper.Web.Framework.Themes;
+using Sniper.Web.Framework.UI;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -98,7 +101,13 @@ namespace Sniper.Web.Framework.Infrastructure
             builder.RegisterType<PerRequestCacheManager>().As<ICacheManager>().InstancePerLifetimeScope();
             builder.Register(context => context.Resolve<IDataProviderManager>().DataProvider).As<IDataProvider>().InstancePerDependency();
             builder.RegisterType<EfDataProviderManager>().As<IDataProviderManager>().InstancePerDependency();
+            builder.RegisterType<PageHeadBuilder>().As<IPageHeadBuilder>().InstancePerLifetimeScope();
+            builder.RegisterType<UrlRecordService>().As<IUrlRecordService>().InstancePerLifetimeScope();
+            builder.RegisterType<AclService>().As<IAclService>().InstancePerLifetimeScope();
 
+            builder.RegisterType<TopicService>().As<ITopicService>().InstancePerLifetimeScope();
+            builder.RegisterType<TopicTemplateService>().As<ITopicTemplateService>().InstancePerLifetimeScope();
+            builder.RegisterType<LocalizedEntityService>().As<ILocalizedEntityService>().InstancePerLifetimeScope();
 
             if (config.RedisEnabled && config.UseRedisForCaching)
             {

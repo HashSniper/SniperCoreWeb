@@ -1,3 +1,15 @@
-﻿@using Sniper.Web
-@using Sniper.Web.Models
+﻿@inherits Sniper.Web.Framework.Mvc.Razor.NopRazorPage<TModel>
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@*we remove the default InputTagHelper to prevent the checkbox duplicating: https://stackoverflow.com/questions/42544961/asp-net-core-custom-input-tag-helper-rendering-duplicate-checkboxes*@
+@removeTagHelper Microsoft.AspNetCore.Mvc.TagHelpers.InputTagHelper, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Sniper.Web.Framework
+@addTagHelper *, MiniProfiler.AspNetCore.Mvc
+
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@using Sniper.Web.Framework
+@using Sniper.Web.Framework.Infrastructure
+@using Sniper.Web.Framework.Models
+@using Sniper.Web.Framework.Security.Captcha
+@using Sniper.Web.Framework.Themes
+@using Sniper.Web.Framework.UI
+@using Sniper.Web.Models.Topics

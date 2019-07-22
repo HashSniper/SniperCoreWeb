@@ -12,19 +12,24 @@ using Sniper.Core.Infrastructure.DependencyManagement;
 using Sniper.Core.Redis;
 using Sniper.Data;
 using Sniper.Services.Authentication;
+using Sniper.Services.Catalog;
 using Sniper.Services.Common;
 using Sniper.Services.Configuration;
 using Sniper.Services.Customers;
 using Sniper.Services.Directory;
+using Sniper.Services.Discounts;
 using Sniper.Services.Events;
 using Sniper.Services.Helpers;
 using Sniper.Services.Localization;
 using Sniper.Services.Logging;
+using Sniper.Services.Media;
 using Sniper.Services.Plugins;
 using Sniper.Services.Security;
 using Sniper.Services.Seo;
+using Sniper.Services.Shipping.Date;
 using Sniper.Services.Stores;
 using Sniper.Services.Tasks;
+using Sniper.Services.Tax;
 using Sniper.Services.Themes;
 using Sniper.Services.Topics;
 using Sniper.Services.Vendors;
@@ -108,6 +113,45 @@ namespace Sniper.Web.Framework.Infrastructure
             builder.RegisterType<TopicService>().As<ITopicService>().InstancePerLifetimeScope();
             builder.RegisterType<TopicTemplateService>().As<ITopicTemplateService>().InstancePerLifetimeScope();
             builder.RegisterType<LocalizedEntityService>().As<ILocalizedEntityService>().InstancePerLifetimeScope();
+            builder.RegisterType<CategoryService>().As<ICategoryService>().InstancePerLifetimeScope();
+            builder.RegisterType<CategoryTemplateService>().As<ICategoryTemplateService>().InstancePerLifetimeScope();
+            builder.RegisterType<ManufacturerService>().As<IManufacturerService>().InstancePerLifetimeScope();
+            builder.RegisterType<ManufacturerTemplateService>().As<IManufacturerTemplateService>().InstancePerLifetimeScope();
+            builder.RegisterType<PriceFormatter>().As<IPriceFormatter>().InstancePerLifetimeScope();
+            builder.RegisterType<ProductService>().As<IProductService>().InstancePerLifetimeScope();
+            builder.RegisterType<ProductTagService>().As<IProductTagService>().InstancePerLifetimeScope();
+            builder.RegisterType<SearchTermService>().As<ISearchTermService>().InstancePerLifetimeScope();
+            builder.RegisterType<SpecificationAttributeService>().As<ISpecificationAttributeService>().InstancePerLifetimeScope();
+            builder.RegisterType<DownloadService>().As<IDownloadService>().InstancePerLifetimeScope();
+            builder.RegisterType<ProductAttributeParser>().As<IProductAttributeParser>().InstancePerLifetimeScope();
+            builder.RegisterType<ProductAttributeService>().As<IProductAttributeService>().InstancePerLifetimeScope();
+            builder.RegisterType<MeasureService>().As<IMeasureService>().InstancePerLifetimeScope();
+            builder.RegisterType<DateRangeService>().As<IDateRangeService>().InstancePerLifetimeScope();
+            builder.RegisterType<DateTimeHelper>().As<IDateTimeHelper>().InstancePerLifetimeScope();
+            builder.RegisterType<PriceCalculationService>().As<IPriceCalculationService>().InstancePerLifetimeScope();
+            builder.RegisterType<ProductTemplateService>().As<IProductTemplateService>().InstancePerLifetimeScope();
+            builder.RegisterType<TaxService>().As<ITaxService>().InstancePerLifetimeScope();
+            builder.RegisterType<DiscountService>().As<IDiscountService>().InstancePerLifetimeScope();
+            builder.RegisterType<DiscountPluginManager>().As<IDiscountPluginManager>().InstancePerLifetimeScope();
+            builder.RegisterType<AddressService>().As<IAddressService>().InstancePerLifetimeScope();
+            builder.RegisterType<CountryService>().As<ICountryService>().InstancePerLifetimeScope();
+            builder.RegisterType<GeoLookupService>().As<IGeoLookupService>().InstancePerLifetimeScope();
+            builder.RegisterType<StateProvinceService>().As<IStateProvinceService>().InstancePerLifetimeScope();
+            builder.RegisterType<TaxPluginManager>().As<ITaxPluginManager>().InstancePerLifetimeScope();
+            builder.RegisterType<AddressAttributeParser>().As<IAddressAttributeParser>().InstancePerLifetimeScope();
+            builder.RegisterType<AddressAttributeService>().As<IAddressAttributeService>().InstancePerLifetimeScope();
+
+
+
+
+            builder.RegisterType<ReviewTypeService>().As<IReviewTypeService>().SingleInstance();
+
+
+            if (config.AzureBlobStorageEnabled)
+                builder.RegisterType<AzurePictureService>().As<IPictureService>().InstancePerLifetimeScope();
+            else
+                builder.RegisterType<PictureService>().As<IPictureService>().InstancePerLifetimeScope();
+
 
             if (config.RedisEnabled && config.UseRedisForCaching)
             {

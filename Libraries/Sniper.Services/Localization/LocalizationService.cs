@@ -16,6 +16,7 @@ using Sniper.Services.Configuration;
 using Sniper.Services.Events;
 using Sniper.Services.Logging;
 using Sniper.Services.Plugins;
+using System.Linq;
 
 namespace Sniper.Services.Localization
 {
@@ -97,9 +98,44 @@ namespace Sniper.Services.Localization
             throw new NotImplementedException();
         }
 
-        public Dictionary<string, KeyValuePair<int, string>> GetAllResourceValues(int languageId, bool? loadPublicLocales)
+        /// <summary>
+        /// 按语言标识获取所有语言环境字符串资源
+        /// </summary>
+        /// <param name="languageId"></param>
+        /// <param name="loadPublicLocales"></param>
+        /// <returns></returns>
+        public virtual Dictionary<string, KeyValuePair<int, string>> GetAllResourceValues(int languageId, bool? loadPublicLocales)
         {
-            throw new NotImplementedException();
+            var key = string.Format(NopLocalizationDefaults.LocaleStringResourcesAllCacheKey, languageId);
+
+            if (!loadPublicLocales.HasValue || _cacheManager.IsSet(key))
+            {
+                var rez = _cacheManager.Get(key, () =>
+                   {
+                       var query = from l in _lsrRepository.TableNoTracking
+                                   orderby l.ResourceName
+                                   where l.LanguageId == languageId
+                                   select l;
+                       return ResourceValuesToDictionary(query);
+                   });
+
+                _cacheManager.Remove(string.Format(NopLocalizationDefaults.LocaleStringResourcesAllPublicCacheKey, languageId));
+                _cacheManager.Remove(string.Format(NopLocalizationDefaults.LocaleStringResourcesAllAdminCacheKey, languageId));
+                return rez;
+            }
+
+            key = string.Format(loadPublicLocales.Value ? NopLocalizationDefaults.LocaleStringResourcesAllPublicCacheKey : NopLocalizationDefaults.LocaleStringResourcesAllAdminCacheKey, languageId);
+
+            return _cacheManager.Get(key, () =>
+             {
+                 var query = from l in _lsrRepository.TableNoTracking
+                             orderby l.ResourceName
+                             where l.LanguageId == languageId
+                             select l;
+
+                 query = loadPublicLocales.Value ? query.Where(r => !r.ResourceName.StartsWith(NopLocalizationDefaults.AdminLocaleStringResourcesPrefix)) : query.Where(r => r.ResourceName.StartsWith(NopLocalizationDefaults.AdminLocaleStringResourcesPrefix));
+                 return ResourceValuesToDictionary(query);
+             });
         }
 
         public LocaleStringResource GetLocaleStringResourceById(int localeStringResourceId)
@@ -128,7 +164,7 @@ namespace Sniper.Services.Localization
         /// <param name="returnDefaultValue"></param>
         /// <param name="ensureTwoPublishedLanguages"></param>
         /// <returns></returns>
-        public TPropType GetLocalized<TEntity, TPropType>(TEntity entity, Expression<Func<TEntity, TPropType>> keySelector, int? languageId = null, bool returnDefaultValue = true, bool ensureTwoPublishedLanguages = true) where TEntity : BaseEntity, ILocalizedEntity
+        public virtual TPropType GetLocalized<TEntity, TPropType>(TEntity entity, Expression<Func<TEntity, TPropType>> keySelector, int? languageId = null, bool returnDefaultValue = true, bool ensureTwoPublishedLanguages = true) where TEntity : BaseEntity, ILocalizedEntity
         {
             if(entity==null)
                 throw new ArgumentNullException(nameof(entity));
@@ -201,14 +237,86 @@ namespace Sniper.Services.Localization
             throw new NotImplementedException();
         }
 
-        public string GetResource(string resourceKey)
+        /// <summary>
+        /// 获取基于指定的ResourceKey属性的资源字符串。
+        /// </summary>
+        /// <param name="resourceKey"></param>
+        /// <returns></returns>
+        public virtual string GetResource(string resourceKey)
         {
-            throw new NotImplementedException();
+            if (_workContext.WorkingCurrency != null)
+                return GetResource(resourceKey, _workContext.WorkingLanguage.Id);
+
+            return string.Empty;
         }
 
-        public string GetResource(string resourceKey, int languageId, bool logIfNotFound = true, string defaultValue = "", bool returnEmptyIfNotFound = false)
+        /// <summary>
+        /// 获取基于指定的ResourceKey属性的资源字符串。
+        /// </summary>
+        /// <param name="resourceKey"></param>
+        /// <param name="languageId"></param>
+        /// <param name="logIfNotFound"></param>
+        /// <param name="defaultValue"></param>
+        /// <param name="returnEmptyIfNotFound"></param>
+        /// <returns></returns>
+        public virtual string GetResource(string resourceKey, int languageId, bool logIfNotFound = true, string defaultValue = "", bool returnEmptyIfNotFound = false)
         {
-            throw new NotImplementedException();
+            var result = string.Empty;
+
+            if (resourceKey == null)
+                resourceKey = string.Empty;
+
+            resourceKey = resourceKey.Trim().ToLowerInvariant();
+
+            if (_localizationSettings.LoadAllLocaleRecordsOnStartup)
+            {
+                var resources = GetAllResourceValues(languageId, !resourceKey.StartsWith(NopLocalizationDefaults.AdminLocaleStringResourcesPrefix, StringComparison.InvariantCultureIgnoreCase));
+
+                if (resources.ContainsKey(resourceKey))
+                {
+                    result = resources[resourceKey].Value;
+                }
+
+
+            }
+            else
+            {
+                var key = string.Format(NopLocalizationDefaults.LocaleStringResourcesByResourceNameCacheKey, languageId, resourceKey);
+
+                var lsr = _cacheManager.Get(key, () =>
+                {
+                    var query = from l in _lsrRepository.Table
+                                where l.ResourceName == resourceKey && l.LanguageId == languageId
+                                select l.ResourceValue;
+
+                    return query.FirstOrDefault();
+                });
+
+                if (lsr != null)
+                {
+                    return lsr;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(result))
+            {
+                return result;
+            }
+
+            if(logIfNotFound)
+                _logger.Warning($"Resource string ({resourceKey}) is not found. Language ID = {languageId}");
+
+            if (!string.IsNullOrEmpty(defaultValue))
+            {
+                result = defaultValue;
+            }
+            else
+            {
+                if (!returnEmptyIfNotFound)
+                    result = resourceKey;
+            }
+
+            return result;
         }
 
         public void ImportResourcesFromXml(Language language, StreamReader xmlStreamReader, bool updateExistingResources = true)
@@ -240,6 +348,26 @@ namespace Sniper.Services.Localization
         {
             throw new NotImplementedException();
         }
+        #endregion
+
+        #region Utilities
+
+        private static Dictionary<string, KeyValuePair<int, string>> ResourceValuesToDictionary(IEnumerable<LocaleStringResource> locales)
+        {
+            var dictionary = new Dictionary<string, KeyValuePair<int, string>>();
+
+            foreach (var locale in locales)
+            {
+                var resourceName = locale.ResourceName.ToLowerInvariant();
+
+                if(!dictionary.ContainsKey(resourceName))
+                    dictionary.Add(resourceName, new KeyValuePair<int, string>(locale.Id, locale.ResourceValue));
+
+            }
+
+            return dictionary;
+        }
+
         #endregion
     }
 }

@@ -18,6 +18,7 @@ using Sniper.Services.Localization;
 using Sniper.Services.Security;
 using Sniper.Services.Shipping.Date;
 using Sniper.Services.Stores;
+using System.Linq;
 
 namespace Sniper.Services.Catalog
 {
@@ -214,9 +215,20 @@ namespace Sniper.Services.Catalog
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 获取主页上显示的所有产品
+        /// </summary>
+        /// <returns></returns>
         public IList<Product> GetAllProductsDisplayedOnHomepage()
         {
-            throw new NotImplementedException();
+            var query = from p in _productRepository.Table
+                        orderby p.DisplayOrder, p.Id
+                        where p.Published && !p.Deleted && p.ShowOnHomepage
+                        select p;
+
+            var products = query.ToList();
+
+            return products;
         }
 
         public IList<Product> GetAssociatedProducts(int parentGroupedProductId, int storeId = 0, int vendorId = 0, bool showHidden = false)
@@ -384,9 +396,24 @@ namespace Sniper.Services.Catalog
             throw new NotImplementedException();
         }
 
-        public bool ProductIsAvailable(Product product, DateTime? dateTime = null)
+        /// <summary>
+        /// 获取指示产品现在是否可用的值（可用日期）
+        /// </summary>
+        /// <param name="product"></param>
+        /// <param name="dateTime"></param>
+        /// <returns></returns>
+        public virtual bool ProductIsAvailable(Product product, DateTime? dateTime = null)
         {
-            throw new NotImplementedException();
+            if(product==null)
+                throw new ArgumentNullException(nameof(product));
+
+            if (product.AvailableStartDateTimeUtc.HasValue && product.AvailableStartDateTimeUtc.Value > dateTime)
+                return false;
+
+            if (product.AvailableEndDateTimeUtc.HasValue && product.AvailableEndDateTimeUtc.Value < dateTime)
+                return false;
+
+            return true;
         }
 
         public bool ProductTagExists(Product product, int productTagId)

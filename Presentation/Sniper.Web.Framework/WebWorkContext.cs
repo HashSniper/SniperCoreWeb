@@ -245,9 +245,60 @@ namespace Sniper.Web.Framework
                 _cachedCurrency = null;
             }
         }
-        public Currency WorkingCurrency { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public virtual Currency WorkingCurrency
+        {
+            get
+            {
+                if (_cachedCurrency != null)
+                    return _cachedCurrency;
+
+                if (IsAdmin)
+                {
+                    var primaryStoreCurrency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
+
+                    if (primaryStoreCurrency != null)
+                    {
+                        _cachedCurrency = primaryStoreCurrency;
+                        return primaryStoreCurrency;
+                    }
+                }
+
+                var customerCurrencyId = _genericAttributeService.GetAttribute<int>(CurrentCustomer, NopCustomerDefaults.CurrencyIdAttribute, _storeContext.CurrentStore.Id);
+
+                var allStoreCurrencies = _currencyService.GetAllCurrencies(storeId: _storeContext.CurrentStore.Id);
+
+                var customerCurrency = allStoreCurrencies.FirstOrDefault(p => p.Id == customerCurrencyId);
+
+                if (customerCurrency == null)
+                {
+                    customerCurrency = allStoreCurrencies.FirstOrDefault(p => p.Id == WorkingLanguage.DefaultCurrencyId);
+                }
+
+                if (customerCurrency == null)
+                {
+                    allStoreCurrencies.FirstOrDefault();
+                }
+
+                if (customerCurrency == null)
+                {
+                    customerCurrency = _currencyService.GetAllCurrencies().FirstOrDefault();
+                }
+
+                _cachedCurrency = customerCurrency;
+
+                return _cachedCurrency;
+            }
+            set
+            {
+                var currencyId = value?.Id ?? 0;
+
+                _genericAttributeService.SaveAttribute(CurrentCustomer, NopCustomerDefaults.CurrencyIdAttribute, currencyId, _storeContext.CurrentStore.Id);
+
+                _cachedCurrency = null;
+            }
+        }
         public TaxDisplayType TaxDisplayType { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool IsAdmin { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsAdmin { get; set; }
         #endregion
 
         #region Utilities

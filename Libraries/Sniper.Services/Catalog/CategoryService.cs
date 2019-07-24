@@ -13,6 +13,7 @@ using Sniper.Services.Events;
 using Sniper.Services.Localization;
 using Sniper.Services.Security;
 using Sniper.Services.Stores;
+using System.Linq;
 
 namespace Sniper.Services.Catalog
 {
@@ -113,9 +114,30 @@ namespace Sniper.Services.Catalog
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 获取主页上显示的所有类别
+        /// </summary>
+        /// <param name="showHidden"></param>
+        /// <returns></returns>
         public IList<Category> GetAllCategoriesDisplayedOnHomepage(bool showHidden = false)
         {
-            throw new NotImplementedException();
+            var query = from c in _categoryRepository.Table
+                        orderby c.DisplayOrder, c.Id
+                        where c.Published && !c.Deleted && c.ShowOnHomepage
+                        select c;
+
+            var categories = query.ToList();
+
+            if (!showHidden)
+            {
+                categories = categories
+                    .Where(c => _aclService.Authorize(c) && _storeMappingService.Authorize(c))
+                    .ToList();
+            }
+
+            return categories;
+
+
         }
 
         public List<Category> GetCategoriesByIds(int[] categoryIds)

@@ -50,10 +50,14 @@ namespace Sniper.Core.Caching
         {
             throw new NotImplementedException();
         }
-
+        /// <summary>
+        /// 获取一个值，该值指示是否缓存与指定键关联的值
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
         public bool IsSet(string key)
         {
-            throw new NotImplementedException();
+            return _provider.Exists(key);
         }
 
         public bool PerformActionWithLock(string resource, TimeSpan expirationTime, Action action)

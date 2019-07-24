@@ -6,6 +6,9 @@ using System.Xml.Serialization;
 
 namespace Sniper.Web.Framework.Models
 {
+    /// <summary>
+    /// 代表基本的nopCommerce模型
+    /// </summary>
     public class BaseNopModel
     {
         #region Ctor

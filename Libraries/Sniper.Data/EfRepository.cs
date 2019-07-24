@@ -56,9 +56,14 @@ namespace Sniper.Data
             throw new NotImplementedException();
         }
 
-        public TEntity GetById(object id)
+        /// <summary>
+        /// Get entity by identifier
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public virtual TEntity GetById(object id)
         {
-            throw new NotImplementedException();
+            return Entities.Find(id);
         }
 
         /// <summary>

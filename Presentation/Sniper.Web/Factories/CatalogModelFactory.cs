@@ -11,6 +11,7 @@ using Sniper.Core.Caching;
 using Sniper.Core.Domain.Blogs;
 using Sniper.Core.Domain.Catalog;
 using Sniper.Core.Domain.Common;
+using Sniper.Core.Domain.Customers;
 using Sniper.Core.Domain.Forums;
 using Sniper.Core.Domain.Media;
 using Sniper.Core.Domain.Vendors;
@@ -23,7 +24,9 @@ using Sniper.Services.Media;
 using Sniper.Services.Seo;
 using Sniper.Services.Topics;
 using Sniper.Services.Vendors;
+using Sniper.Web.Infrastructure.Cache;
 using Sniper.Web.Models.Catalog;
+using Sniper.Web.Models.Media;
 
 namespace Sniper.Web.Factories
 {
@@ -163,9 +166,53 @@ namespace Sniper.Web.Factories
             throw new NotImplementedException();
         }
 
-        public List<CategoryModel> PrepareHomepageCategoryModels()
+        /// <summary>
+        /// 准备主页类别模型
+        /// </summary>
+        /// <returns></returns>
+        public virtual List<CategoryModel> PrepareHomepageCategoryModels()
         {
-            throw new NotImplementedException();
+            var pictureSize = _mediaSettings.CategoryThumbPictureSize;
+            var categoriesCacheKey = string.Format(NopModelCacheDefaults.CategoryHomepageKey,
+                string.Join(",", _workContext.CurrentCustomer.GetCustomerRoleIds()),
+                pictureSize,
+                _storeContext.CurrentStore.Id,
+                _workContext.WorkingLanguage.Id,
+                _webHelper.IsCurrentConnectionSecured());
+
+            var model = _cacheManager.Get(categoriesCacheKey, () =>
+               _categoryService.GetAllCategoriesDisplayedOnHomepage()
+               .Select(category =>
+               {
+                   var catModel = new CategoryModel
+                   {
+                       Id = category.Id,
+                       Name = _localizationService.GetLocalized(category, x => x.Name),
+                       Description = _localizationService.GetLocalized(category, x => x.Description),
+                       MetaKeywords = _localizationService.GetLocalized(category, x => x.MetaKeywords),
+                       MetaDescription = _localizationService.GetLocalized(category, x => x.MetaDescription),
+                       MetaTitle = _localizationService.GetLocalized(category, x => x.MetaTitle),
+                       SeName = _urlRecordService.GetSeName(category)
+                   };
+
+                   var categoryPictureCacheKey = string.Format(NopModelCacheDefaults.CategoryPictureModelKey, category.Id, pictureSize, true, _workContext.WorkingLanguage.Id, _webHelper.IsCurrentConnectionSecured(), _storeContext.CurrentStore.Id);
+                   catModel.PictureModel = _cacheManager.Get(categoryPictureCacheKey, () =>
+                   {
+                       var picture = _pictureService.GetPictureById(category.PictureId);
+                       var pictureModel = new PictureModel
+                       {
+                           FullSizeImageUrl = _pictureService.GetPictureUrl(picture),
+                           ImageUrl = _pictureService.GetPictureUrl(picture, pictureSize),
+                           Title = string.Format(_localizationService.GetResource("Media.Category.ImageLinkTitleFormat"), catModel.Name),
+                           AlternateText = string.Format(_localizationService.GetResource("Media.Category.ImageAlternateTextFormat"), catModel.Name)
+                       };
+                       return pictureModel;
+                   });
+
+                   return catModel;
+               }).ToList()
+               );
+            return model;
         }
 
         public List<ManufacturerModel> PrepareManufacturerAllModels()
